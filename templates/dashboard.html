@@ -1,0 +1,289 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Smart Vending Machine{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+    <div>
+        <h2 class="fw-bold mb-0">Admin Dashboard</h2>
+        <p class="text-muted mb-0">Manage raw materials and drink products</p>
+    </div>
+    <a href="/logout" class="btn btn-outline-danger">Logout</a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <div class="card stat-card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <div class="stat-icon bg-primary-subtle text-primary">&#128230;</div>
+                <div class="stat-value">{{ materials|default([])|length }}</div>
+                <div class="stat-label">Raw Materials</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card stat-card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <div class="stat-icon bg-success-subtle text-success">&#9749;</div>
+                <div class="stat-value">{{ products|default([])|length }}</div>
+                <div class="stat-label">Drink Products</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<ul class="nav nav-tabs mb-4" id="dashboardTabs" role="tablist">
+
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="inventory-tab" data-bs-toggle="tab"
+                data-bs-target="#inventory" type="button" role="tab">
+            &#128230; Inventory
+        </button>
+    </li>
+    
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="products-tab" data-bs-toggle="tab"
+                data-bs-target="#products" type="button" role="tab">
+            &#9749; Products
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="dashboardTabsContent">
+
+    <!-- ================= Inventory ================= -->
+    <div class="tab-pane fade show active" id="inventory" role="tabpanel">
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white fw-bold">Current Stock</div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Material</th>
+                                    <th class="text-end">Quantity</th>
+                                    <th>Unit</th>
+                                    <th class="text-end">Cost / Unit</th>
+                                    <th class="text-end">Total Value</th>
+                                    <th class="text-center">Adjust Stock</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for material in materials|default([]) %}
+                                <tr>
+                                    <td class="fw-semibold">{{ material.name }}</td>
+                                    <td class="text-end">
+                                        <span class="badge {{ 'bg-danger' if material.quantity|float < 10 else 'bg-success' }}">
+                                            {{ material.quantity }}
+                                        </span>
+                                    </td>
+                                    <td>{{ material.unit or '—' }}</td>
+                                    <td class="text-end">${{ "%.2f"|format(material.cost_per_unit|float) }}</td>
+                                    <td class="text-end">
+                                        ${{ "%.2f"|format(material.quantity|float * material.cost_per_unit|float) }}
+                                    </td>
+                                    <td class="text-center">
+                                        <form method="POST" action="/materials/{{ material.id }}/update"
+                                              class="d-flex justify-content-center gap-1">
+                                            <input type="number" step="0.01" name="amount"
+                                                   class="form-control form-control-sm stock-input"
+                                                   placeholder="+/-" required>
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">Apply</button>
+                                        </form>
+                                    </td>
+                                    <td class="text-end">
+                                        <form method="POST" action="/materials/{{ material.id }}/delete"
+                                              onsubmit="return confirm('Delete {{ material.name }}?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">&times;</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted py-4">No materials yet. Add one on the right.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white fw-bold">Add / Update Material</div>
+                    <div class="card-body">
+                        <form method="POST" action="/materials/add">
+                            <div class="mb-3">
+                                <label for="materialName" class="form-label">Name</label>
+                                <input type="text" class="form-control" id="materialName" name="name"
+                                       placeholder="e.g. coffee-beans" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="materialUnit" class="form-label">Unit</label>
+                                <input type="text" class="form-control" id="materialUnit" name="unit"
+                                       placeholder="e.g. g, ml, piece" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="materialQty" class="form-label">Quantity</label>
+                                <input type="number" step="0.01" min="0" class="form-control" id="materialQty"
+                                       name="quantity" placeholder="0" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="materialCost" class="form-label">Cost per unit</label>
+                                <input type="number" step="0.01" min="0" class="form-control" id="materialCost"
+                                       name="cost" placeholder="0.00" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Save Material</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= Products ================= -->
+    <div class="tab-pane fade" id="products" role="tabpanel">
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white fw-bold">Drink Products</div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Drink</th>
+                                    <th>Type</th>
+                                    <th class="text-end">Profit Margin</th>
+                                    <th>Ingredients</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in products|default([]) %}
+                                <tr>
+                                    <td class="fw-semibold">{{ product.name }}</td>
+                                    <td>
+                                        <span class="badge {{ 'bg-danger' if product.is_hot else 'bg-info text-dark' }}">
+                                            {{ 'Hot' if product.is_hot else 'Cold' }}
+                                        </span>
+                                    </td>
+                                    <td class="text-end">{{ "%.0f"|format(product.profit_margin|float * 100) }}%</td>
+                                    <td><code class="small">{{ product.ingredients_text }}</code></td>
+                                    <td class="text-end">
+                                        <form method="POST" action="/products/{{ product.id }}/delete"
+                                              onsubmit="return confirm('Delete {{ product.name }}?');">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">&times;</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">No products yet. Add one on the right.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white fw-bold">Add New Drink</div>
+                    <div class="card-body">
+                        <form method="POST" action="/products/add" id="productForm">
+                            <div class="mb-3">
+                                <label for="productName" class="form-label">Drink name</label>
+                                <input type="text" class="form-control" id="productName" name="name"
+                                       placeholder="e.g. Cappuccino" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="profitMargin" class="form-label">Profit margin</label>
+                                <div class="input-group">
+                                    <input type="number" step="0.01" min="0" class="form-control" id="profitMargin"
+                                           name="margin" placeholder="0.30" required>
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                <div class="form-text">Use 0.30 for a 30% margin.</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="productType" class="form-label">Drink type</label>
+                                <select class="form-select" id="productType" name="is_hot">
+                                    <option value="0" selected>Cold</option>
+                                    <option value="1">Hot</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="productDescription" class="form-label">Description (optional)</label>
+                                <input type="text" class="form-control" id="productDescription"
+                                       name="description" placeholder="Short description">
+                            </div>
+
+                            <label class="form-label">Ingredients (per cup)</label>
+                            <div id="ingredientRows">
+                                <div class="row g-2 mb-2 ingredient-row">
+                                    <div class="col-7">
+                                        <input type="text" class="form-control form-control-sm" name="ingredient_name"
+                                               placeholder="Material" required>
+                                    </div>
+                                    <div class="col-4">
+                                        <input type="number" step="0.01" min="0" class="form-control form-control-sm"
+                                               name="ingredient_qty" placeholder="Qty" required>
+                                    </div>
+                                    <div class="col-1 d-grid">
+                                        <button type="button" class="btn btn-sm btn-outline-danger remove-row">&times;</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="button" class="btn btn-sm btn-outline-secondary mb-3" id="addIngredient">
+                                + Add ingredient
+                            </button>
+
+                            <button type="submit" class="btn btn-success w-100">Save Drink</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const rows = document.getElementById('ingredientRows');
+    const addBtn = document.getElementById('addIngredient');
+
+    addBtn.addEventListener('click', () => {
+        const row = document.createElement('div');
+        row.className = 'row g-2 mb-2 ingredient-row';
+        row.innerHTML = `
+            <div class="col-7">
+                <input type="text" class="form-control form-control-sm" name="ingredient_name" placeholder="Material" required>
+            </div>
+            <div class="col-4">
+                <input type="number" step="0.01" min="0" class="form-control form-control-sm" name="ingredient_qty" placeholder="Qty" required>
+            </div>
+            <div class="col-1 d-grid">
+                <button type="button" class="btn btn-sm btn-outline-danger remove-row">&times;</button>
+            </div>`;
+        rows.appendChild(row);
+    });
+
+    rows.addEventListener('click', (event) => {
+        if (event.target.classList.contains('remove-row')) {
+            const allRows = rows.querySelectorAll('.ingredient-row');
+            if (allRows.length > 1) {
+                event.target.closest('.ingredient-row').remove();
+            }
+        }
+    });
+</script>
+{% endblock %}

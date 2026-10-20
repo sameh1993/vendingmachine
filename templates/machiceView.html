@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Machine - Smart Vending Machine{% endblock %}
+
+{% block content %}
+<div class="machine-view">
+    <div class="machine-frame shadow-lg">
+
+        <!-- Machine header -->
+        <div class="machine-header">
+            <div>
+                <h3 class="fw-bold mb-0">&#129302; Smart Vending Machine</h3>
+                <small class="opacity-75">Select your drink below</small>
+            </div>
+            <span class="badge bg-success">Online</span>
+        </div>
+
+        <div class="row g-0">
+            <!-- Product slots -->
+            <div class="col-lg-8 p-3 p-md-4">
+                <div class="slot-grid">
+                    {% for product in products|default([]) %}
+                    <button type="button"
+                            class="slot-btn"
+                            data-id="{{ product.id|default(loop.index) }}"
+                            data-name="{{ product.name }}"
+                            data-price="{{ '%.2f'|format(product.price|default(0)|float) }}"
+                            data-hot="{{ '1' if product.is_hot else '0' }}">
+                        <span class="slot-code">{{ "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[loop.index0 // 4] }}{{ loop.index0 % 4 + 1 }}</span>
+                        <span class="slot-icon">{{ '&#9749;' if product.is_hot else '&#129380;' }}</span>
+                        <span class="slot-name">{{ product.name }}</span>
+                        <span class="slot-price">${{ "%.2f"|format(product.price|default(0)|float) }}</span>
+                    </button>
+                    {% else %}
+                    <div class="empty-machine">No products available.</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Selection panel -->
+            <div class="col-lg-4 p-3 p-md-4 panel-column">
+                <div class="display-panel">
+                    <div class="display-label">Selected item</div>
+                    <div class="display-name" id="selectedName">—</div>
+                    <div class="display-price" id="selectedPrice">$0.00</div>
+
+                    <hr>
+
+                    <div class="d-flex justify-content-between small opacity-75 mb-1">
+                        <span>Item</span><span id="selectedCode">—</span>
+                    </div>
+                    <div class="d-flex justify-content-between small opacity-75 mb-3">
+                        <span>Type</span><span id="selectedType">—</span>
+                    </div>
+
+                    <form method="POST" id="payForm" action="#">
+                        <button type="submit" class="btn btn-success btn-lg w-100" id="payBtn" disabled>
+                            Pay &amp; Dispense
+                        </button>
+                    </form>
+                </div>
+
+                <div class="d-grid gap-2 mt-3">
+                    <a href="/menu" class="btn btn-outline-light">View Full Menu</a>
+                    <a href="/dashboard" class="btn btn-outline-light btn-sm">Admin Dashboard</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    (function () {
+        const buttons = document.querySelectorAll('.slot-btn');
+        const selectedName = document.getElementById('selectedName');
+        const selectedPrice = document.getElementById('selectedPrice');
+        const selectedCode = document.getElementById('selectedCode');
+        const selectedType = document.getElementById('selectedType');
+        const payForm = document.getElementById('payForm');
+        const payBtn = document.getElementById('payBtn');
+
+        buttons.forEach(function (button) {
+            button.addEventListener('click', function () {
+                buttons.forEach(function (b) { b.classList.remove('active'); });
+                button.classList.add('active');
+
+                selectedName.textContent = button.dataset.name;
+                selectedPrice.textContent = '$' + button.dataset.price;
+                selectedCode.textContent = button.querySelector('.slot-code').textContent;
+                selectedType.textContent = button.dataset.hot === '1' ? 'Hot drink' : 'Cold drink';
+
+                payForm.action = '/buy/' + button.dataset.id;
+                payBtn.disabled = false;
+            });
+        });
+    })();
+</script>
+{% endblock %}

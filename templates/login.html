@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Login - Smart Vending Machine{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center login-wrapper">
+    <div class="col-md-5 col-lg-4">
+        <div class="card shadow-lg border-0">
+            <div class="card-body p-4 p-md-5">
+                <div class="text-center mb-4">
+                    <div class="login-icon mb-2">&#128274;</div>
+                    <h3 class="fw-bold mb-1">Admin Login</h3>
+                    <p class="text-muted small mb-0">Sign in to manage the vending machine</p>
+                </div>
+
+                {% if error %}
+                <div class="alert alert-danger py-2 small" role="alert">{{ error }}</div>
+                {% endif %}
+
+                <form method="POST" action="/login">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control form-control-lg" id="username"
+                               name="username" placeholder="admin" autocomplete="username" required>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control form-control-lg" id="password"
+                               name="password" placeholder="Enter your password" autocomplete="current-password" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg w-100">Sign In</button>
+                </form>
+
+                <div class="text-center mt-4">
+                    <a href="/menu" class="text-decoration-none small">&larr; Back to menu</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

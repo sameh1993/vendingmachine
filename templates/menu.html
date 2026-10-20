@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Menu - Smart Vending Machine{% endblock %}
+
+{% block content %}
+<section class="menu-hero text-center text-white rounded-4 mb-5 p-5">
+    <h1 class="fw-bold mb-2">&#9749; Drink Menu</h1>
+    <p class="mb-0 opacity-75">Freshly made drinks, served by your smart vending machine.</p>
+</section>
+
+<div class="row g-4">
+    {% for product in products|default([]) %}
+    <div class="col-sm-6 col-lg-4">
+        <div class="card drink-card h-100 shadow-sm border-0">
+            <div class="card-body d-flex flex-column">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div class="drink-icon">{{ '&#9749;' if product.is_hot else '&#129380;' }}</div>
+                    <span class="badge {{ 'bg-danger' if product.is_hot else 'bg-info text-dark' }}">
+                        {{ 'Hot' if product.is_hot else 'Cold' }}
+                    </span>
+                </div>
+
+                <h4 class="card-title fw-bold">{{ product.name }}</h4>
+
+                {% if product.description %}
+                <p class="text-muted small mb-3">{{ product.description }}</p>
+                {% endif %}
+
+                <div class="mt-auto">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="text-muted small">Price</span>
+                        <span class="fs-4 fw-bold text-success">${{ "%.2f"|format(product.price|default(0)|float) }}</span>
+                    </div>
+
+                    <form method="POST" action="/buy/{{ product.id|default(loop.index) }}">
+                        <button type="submit" class="btn btn-primary w-100">
+                            Buy Now
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+        <div class="alert alert-info text-center py-5 mb-0">
+            <div class="fs-1 mb-2">&#128533;</div>
+            No drinks are available right now. Please check back later.
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
